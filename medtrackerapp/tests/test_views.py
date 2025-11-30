@@ -1,10 +1,14 @@
+from unittest import TestCase
+
 from rest_framework.test import APITestCase
 from medtrackerapp.models import Medication, DoseLog
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from datetime import timedelta, date, datetime
-from unittest.mock import patch
+from unittest.mock import patch, Mock
+
+from medtrackerapp.services import DrugInfoService
 
 
 class MedicationViewTests(APITestCase):
@@ -200,3 +204,4 @@ class MedicationExternalInfoTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
         self.assertIn("error", response.data)
         self.assertEqual(response.data["error"], "API failure")
+
