@@ -4,7 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from datetime import timedelta, date, datetime
-
+from unittest.mock import patch
 
 
 class MedicationViewTests(APITestCase):
@@ -167,3 +167,36 @@ class DoseLogViewTests(APITestCase):
         url = reverse("doselog-filter-by-date")
         response = self.client.get(f"{url}?start=bad&end=invalid")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class MedicationExternalInfoTest(APITestCase):
+    def setUp(self):
+        self.med = Medication.objects.create(name="Aspirin", dosage_mg=100, prescribed_per_day=2)
+
+    @patch('medtrackerapp.services.DrugInfoService.get_drug_info')
+    def test_external_info_success(self, mock_get_drug_info):
+        # Mock successful API response
+        mock_get_drug_info.return_value = {
+            "generic_name": "aspirin",
+            "brand_name": "Bayer",
+            "purpose": "Pain relief"
+        }
+
+        url = reverse("medication-get-external-info", args=[self.med.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("generic_name", response.data)
+        self.assertEqual(response.data["generic_name"], "aspirin")
+
+    @patch('medtrackerapp.services.DrugInfoService.get_drug_info')
+    def test_external_info_failure(self, mock_get_drug_info):
+        # Mock an exception raised by the API call
+        mock_get_drug_info.side_effect = Exception("API failure")
+
+        url = reverse("medication-get-external-info", args=[self.med.pk])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
+        self.assertIn("error", response.data)
+        self.assertEqual(response.data["error"], "API failure")
