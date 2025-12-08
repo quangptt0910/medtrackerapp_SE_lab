@@ -16,8 +16,8 @@ jobs:
       postgres:
         image: postgres:18
         env:
-          POSTGRES_USER: Developer
-          POSTGRES_PASSWORD: test
+          POSTGRES_USER: quang
+          POSTGRES_PASSWORD: 6972141
           POSTGRES_DB: medtracker
         ports:
           - 5432:5432
@@ -50,12 +50,12 @@ jobs:
 
       - name: Apply migrations
         env:
-          DATABASE_URL: postgres://Developer:test@localhost:5432/medtracker
+          DATABASE_URL: postgres://django:django@localhost:5432/medtracker
         run: |
           python manage.py migrate
 
       - name: Run tests
         env:
-          DATABASE_URL: postgres://Developer:test@localhost:5432/medtracker
+          DATABASE_URL: postgres://django:django@localhost:5432/medtracker
         run: |
           python manage.py test medtrackerapp/tests
