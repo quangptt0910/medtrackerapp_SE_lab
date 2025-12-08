@@ -55,7 +55,7 @@ WSGI_APPLICATION = "medtracker.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("DB_NAME", "medtracker_db"),
+        "NAME": os.getenv("DB_NAME", "medtracker"),
         "USER": os.getenv("DB_USER", "Developer"),
         "PASSWORD": os.getenv("DB_PASSWORD", "test"),
         "HOST": os.getenv("DB_HOST", "localhost"),

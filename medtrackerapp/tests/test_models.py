@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.test import TestCase
 from medtrackerapp.models import Medication, DoseLog
 from django.utils import timezone
@@ -69,6 +71,15 @@ class MedicationModelTests(TestCase):
 
         rate = self.med.adherence_rate_over_period(start, end)
         self.assertEqual(rate, round(100*5/6, 2))
+
+    def test_adherence_rate_over_period_expected_zero(self):
+        med = Medication.objects.create(name="TestMed", dosage_mg=50, prescribed_per_day=2)
+        start = date(2025, 10, 1)
+        end = date(2025, 10, 7)
+
+        with patch.object(Medication, 'expected_doses', return_value=0):
+            rate = med.adherence_rate_over_period(start, end)
+            self.assertEqual(rate, 0.0)
 
     def test_adherence_rate_over_period_all_dose_taken_wrong_period(self):
         med = Medication.objects.create(name="X", dosage_mg=100, prescribed_per_day=2)
