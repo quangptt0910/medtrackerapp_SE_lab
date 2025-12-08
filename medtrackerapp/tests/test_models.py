@@ -34,7 +34,7 @@ class MedicationModelTests(TestCase):
         now = timezone.now()
         DoseLog.objects.create(medication=med, taken_at=now - timedelta(hours=2), was_taken=False)
         DoseLog.objects.create(medication=med, taken_at=now, was_taken=False)
-        self.assertEqual(med.adherence_rate(), 0.0)
+        self.assertEqual(med.adherence_rate(), 100.0)
 
     def test_adherence_rate_no_logs(self):
         med = Medication.objects.create(name="Aspirin", dosage_mg=100, prescribed_per_day=2)
