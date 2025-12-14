@@ -1,9 +1,30 @@
-from rest_framework import viewsets, status
+from rest_framework import mixins, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils.dateparse import parse_date
-from .models import Medication, DoseLog
-from .serializers import MedicationSerializer, DoseLogSerializer
+from .models import Medication, DoseLog, Note
+from .serializers import MedicationSerializer, DoseLogSerializer, NoteSerializer
+
+
+def _get_required_positive_int_query_param(request, name: str) -> int:
+    """Parse a required positive integer query parameter.
+
+    Raises:
+        ValueError: If the parameter is missing, not an integer, or <= 0.
+    """
+    raw_value = request.query_params.get(name)
+    if raw_value is None:
+        raise ValueError(f"Query parameter '{name}' is required.")
+
+    try:
+        value = int(raw_value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Query parameter '{name}' must be a positive integer.") from exc
+
+    if value <= 0:
+        raise ValueError(f"Query parameter '{name}' must be a positive integer.")
+
+    return value
 
 class MedicationViewSet(viewsets.ModelViewSet):
     """
@@ -20,6 +41,7 @@ class MedicationViewSet(viewsets.ModelViewSet):
         - PUT/PATCH /medications/{id}/ — update a medication
         - DELETE /medications/{id}/ — delete a medication
         - GET /medications/{id}/info/ — fetch external drug info from OpenFDA
+        - GET /medications/{id}/expected-doses/?days=X — expected doses over X days
     """
     queryset = Medication.objects.all()
     serializer_class = MedicationSerializer
@@ -50,6 +72,41 @@ class MedicationViewSet(viewsets.ModelViewSet):
         if isinstance(data, dict) and data.get("error"):
             return Response(data, status=status.HTTP_502_BAD_GATEWAY)
         return Response(data)
+
+    @action(detail=True, methods=["get"], url_path="expected-doses")
+    def expected_doses(self, request, pk=None):
+        """Return the expected number of doses over a given number of days.
+
+        Endpoint:
+            GET /api/medications/<id>/expected-doses/?days=X
+
+        Query parameters:
+            days (required): Positive integer.
+
+        Responses:
+            200: {medication_id, days, expected_doses}
+            400: If 'days' is missing/invalid or model computation raises ValueError.
+        """
+        try:
+            days = _get_required_positive_int_query_param(request, "days")
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        medication = self.get_object()
+
+        try:
+            expected_dose_count = medication.expected_doses(days)
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                "medication_id": medication.id,
+                "days": days,
+                "expected_doses": expected_dose_count,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class DoseLogViewSet(viewsets.ModelViewSet):
@@ -105,3 +162,19 @@ class DoseLogViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(logs, many=True)
         return Response(serializer.data)
+
+
+class NoteViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """API endpoint for listing, retrieving, creating, and deleting notes.
+
+    Updating existing notes is intentionally not supported.
+    """
+
+    queryset = Note.objects.all()
+    serializer_class = NoteSerializer
