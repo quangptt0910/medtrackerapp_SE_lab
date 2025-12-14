@@ -20,6 +20,7 @@ class MedicationViewSet(viewsets.ModelViewSet):
         - PUT/PATCH /medications/{id}/ — update a medication
         - DELETE /medications/{id}/ — delete a medication
         - GET /medications/{id}/info/ — fetch external drug info from OpenFDA
+        - GET /medications/{id}/expected-doses/?days=X — expected doses over X days
     """
     queryset = Medication.objects.all()
     serializer_class = MedicationSerializer
@@ -50,6 +51,35 @@ class MedicationViewSet(viewsets.ModelViewSet):
         if isinstance(data, dict) and data.get("error"):
             return Response(data, status=status.HTTP_502_BAD_GATEWAY)
         return Response(data)
+
+    @action(detail=True, methods=["get"], url_path="expected-doses")
+    def expected_doses(self, request, pk=None):
+        days_raw = request.query_params.get("days")
+        if days_raw is None:
+            return Response({"error": "days is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            days = int(days_raw)
+        except (TypeError, ValueError):
+            return Response({"error": "days must be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
+
+        if days <= 0:
+            return Response({"error": "days must be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
+
+        medication = self.get_object()
+        try:
+            expected = medication.expected_doses(days)
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response(
+            {
+                "medication_id": medication.id,
+                "days": days,
+                "expected_doses": expected,
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class DoseLogViewSet(viewsets.ModelViewSet):
