@@ -5,6 +5,27 @@ from django.utils.dateparse import parse_date
 from .models import Medication, DoseLog
 from .serializers import MedicationSerializer, DoseLogSerializer
 
+
+def _get_required_positive_int_query_param(request, name: str) -> int:
+    """Parse a required positive integer query parameter.
+
+    Raises:
+        ValueError: If the parameter is missing, not an integer, or <= 0.
+    """
+    raw_value = request.query_params.get(name)
+    if raw_value is None:
+        raise ValueError(f"Query parameter '{name}' is required.")
+
+    try:
+        value = int(raw_value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"Query parameter '{name}' must be a positive integer.") from exc
+
+    if value <= 0:
+        raise ValueError(f"Query parameter '{name}' must be a positive integer.")
+
+    return value
+
 class MedicationViewSet(viewsets.ModelViewSet):
     """
     API endpoint for viewing and managing medications.
@@ -54,21 +75,27 @@ class MedicationViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"], url_path="expected-doses")
     def expected_doses(self, request, pk=None):
-        days_raw = request.query_params.get("days")
-        if days_raw is None:
-            return Response({"error": "days is required"}, status=status.HTTP_400_BAD_REQUEST)
+        """Return the expected number of doses over a given number of days.
 
+        Endpoint:
+            GET /api/medications/<id>/expected-doses/?days=X
+
+        Query parameters:
+            days (required): Positive integer.
+
+        Responses:
+            200: {medication_id, days, expected_doses}
+            400: If 'days' is missing/invalid or model computation raises ValueError.
+        """
         try:
-            days = int(days_raw)
-        except (TypeError, ValueError):
-            return Response({"error": "days must be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
-
-        if days <= 0:
-            return Response({"error": "days must be a positive integer"}, status=status.HTTP_400_BAD_REQUEST)
+            days = _get_required_positive_int_query_param(request, "days")
+        except ValueError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
         medication = self.get_object()
+
         try:
-            expected = medication.expected_doses(days)
+            expected_dose_count = medication.expected_doses(days)
         except ValueError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -76,7 +103,7 @@ class MedicationViewSet(viewsets.ModelViewSet):
             {
                 "medication_id": medication.id,
                 "days": days,
-                "expected_doses": expected,
+                "expected_doses": expected_dose_count,
             },
             status=status.HTTP_200_OK,
         )
