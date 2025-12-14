@@ -260,3 +260,74 @@ class ExpectedDosesEndpointTest(APITestCase):
             )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class NoteViewTests(APITestCase):
+    def setUp(self):
+        self.med = Medication.objects.create(name="Aspirin", dosage_mg=100, prescribed_per_day=2)
+
+    def test_create_note_returns_201(self):
+        url = reverse("note-list")
+        payload = {"medication": self.med.id, "text": "Patient reported mild nausea."}
+        response = self.client.post(url, payload, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["medication"], self.med.id)
+        self.assertEqual(response.data["text"], payload["text"])
+        self.assertIn("created_at", response.data)
+
+    def test_list_notes_returns_200(self):
+        self.client.post(
+            reverse("note-list"),
+            {"medication": self.med.id, "text": "A"},
+            format="json",
+        )
+        self.client.post(
+            reverse("note-list"),
+            {"medication": self.med.id, "text": "B"},
+            format="json",
+        )
+
+        response = self.client.get(reverse("note-list"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(response.data), 2)
+
+    def test_retrieve_note_returns_200(self):
+        create = self.client.post(
+            reverse("note-list"),
+            {"medication": self.med.id, "text": "Follow-up in 2 weeks."},
+            format="json",
+        )
+        note_id = create.data["id"]
+
+        response = self.client.get(reverse("note-detail", args=[note_id]))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["id"], note_id)
+        self.assertEqual(response.data["text"], "Follow-up in 2 weeks.")
+        self.assertEqual(response.data["medication"], self.med.id)
+
+    def test_delete_note_returns_204(self):
+        create = self.client.post(
+            reverse("note-list"),
+            {"medication": self.med.id, "text": "Stop if rash develops."},
+            format="json",
+        )
+        note_id = create.data["id"]
+
+        response = self.client.delete(reverse("note-detail", args=[note_id]))
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+
+    def test_update_note_not_supported_returns_405(self):
+        create = self.client.post(
+            reverse("note-list"),
+            {"medication": self.med.id, "text": "Original"},
+            format="json",
+        )
+        note_id = create.data["id"]
+
+        response = self.client.put(
+            reverse("note-detail", args=[note_id]),
+            {"medication": self.med.id, "text": "Updated"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)

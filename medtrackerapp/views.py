@@ -1,9 +1,9 @@
-from rest_framework import viewsets, status
+from rest_framework import mixins, viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.utils.dateparse import parse_date
-from .models import Medication, DoseLog
-from .serializers import MedicationSerializer, DoseLogSerializer
+from .models import Medication, DoseLog, Note
+from .serializers import MedicationSerializer, DoseLogSerializer, NoteSerializer
 
 
 def _get_required_positive_int_query_param(request, name: str) -> int:
@@ -162,3 +162,19 @@ class DoseLogViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(logs, many=True)
         return Response(serializer.data)
+
+
+class NoteViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    """API endpoint for listing, retrieving, creating, and deleting notes.
+
+    Updating existing notes is intentionally not supported.
+    """
+
+    queryset = Note.objects.all()
+    serializer_class = NoteSerializer
