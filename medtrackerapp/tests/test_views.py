@@ -205,3 +205,58 @@ class MedicationExternalInfoTest(APITestCase):
         self.assertIn("error", response.data)
         self.assertEqual(response.data["error"], "API failure")
 
+
+class ExpectedDosesEndpointTest(APITestCase):
+    def setUp(self):
+        self.med = Medication.objects.create(name="Aspirin", dosage_mg=100, prescribed_per_day=2)
+
+    def test_valid_request_returns_200(self):
+        days = 3
+        response = self.client.get(
+            f'/api/medications/{self.med.id}/expected-doses/?days={days}'
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('medication_id', response.data)
+        self.assertIn('days', response.data)
+        self.assertIn('expected_doses', response.data)
+        self.assertEqual(response.data['medication_id'], self.med.id)
+        self.assertEqual(response.data['days'], days)
+        self.assertEqual(response.data['expected_doses'], self.med.expected_doses(days))
+
+    def test_missing_days_parameter_returns_400(self):
+        response = self.client.get(
+            f'/api/medications/{self.med.id}/expected-doses/'
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_invalid_days_value_returns_400(self):
+        """Test request with non-integer days value"""
+        response = self.client.get(
+            f'/api/medications/{self.med.id}/expected-doses/',
+            {'days': 'invalid'}
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_negative_days_returns_400(self):
+        response = self.client.get(
+            f'/api/medications/{self.med.id}/expected-doses/',
+            {'days': -5}
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_zero_days_returns_400(self):
+        response = self.client.get(
+            f'/api/medications/{self.med.id}/expected-doses/',
+            {'days': 0}
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_expected_doses_valueerror_returns_400(self):
+        days = 3
+        with patch.object(Medication, "expected_doses", side_effect=ValueError("boom")):
+            response = self.client.get(
+                f'/api/medications/{self.med.id}/expected-doses/?days={days}'
+            )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
