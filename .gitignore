@@ -2,3 +2,8 @@ myenv
 
 
   medtrackerapp/migrations/__pycache__/0002_note.cpython-312.pyc
+/medtracker/__pycache__/
+../__pycache__/
+__pycache__/
+/medtrackerapp/migrations/__pycache__/
+*.pyc
