@@ -1,5 +1,14 @@
 myenv
 
+
+  medtrackerapp/migrations/__pycache__/0002_note.cpython-312.pyc
+medtracker/__pycache__/settings.cpython-312.pyc
+medtrackerapp/__pycache__/models.cpython-312.pyc
+medtrackerapp/__pycache__/serializers.cpython-312.pyc
+edtrackerapp/__pycache__/urls.cpython-312.pyc
+medtrackerapp/__pycache__/views.cpython-312.pyc
+medtrackerapp/tests/__pycache__/test_models.cpython-312.pyc
+medtrackerapp/tests/__pycache__/test_views.cpython-312.pyc
 /medtracker/__pycache__/
 ../__pycache__/
 __pycache__/
