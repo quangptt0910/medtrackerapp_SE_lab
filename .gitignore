@@ -9,3 +9,8 @@ edtrackerapp/__pycache__/urls.cpython-312.pyc
 medtrackerapp/__pycache__/views.cpython-312.pyc
 medtrackerapp/tests/__pycache__/test_models.cpython-312.pyc
 medtrackerapp/tests/__pycache__/test_views.cpython-312.pyc
+/medtracker/__pycache__/
+../__pycache__/
+__pycache__/
+/medtrackerapp/migrations/__pycache__/
+*.pyc
