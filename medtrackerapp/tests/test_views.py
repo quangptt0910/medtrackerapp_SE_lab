@@ -1,4 +1,3 @@
-
 from rest_framework.test import APITestCase
 from medtrackerapp.models import Medication, DoseLog
 from django.urls import reverse
@@ -8,10 +7,11 @@ from datetime import timedelta
 from unittest.mock import patch
 
 
-
 class MedicationViewTests(APITestCase):
     def setUp(self):
-        self.med = Medication.objects.create(name="Aspirin", dosage_mg=100, prescribed_per_day=2)
+        self.med = Medication.objects.create(
+            name="Aspirin", dosage_mg=100, prescribed_per_day=2
+        )
 
     def test_list_medications_valid_data(self):
         url = reverse("medication-list")
@@ -25,14 +25,14 @@ class MedicationViewTests(APITestCase):
     def test_create_medication_valid(self):
         url = reverse("medication-list")
         data = {"name": "Ibuprofen", "dosage_mg": 200, "prescribed_per_day": 3}
-        response = self.client.post(url, data, format='json')
+        response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data["name"], "Ibuprofen")
 
     def test_create_medication_invalid(self):
         url = reverse("medication-list")
         data = {"name": "", "dosage_mg": -10, "prescribed_per_day": 0}  # invalid data
-        response = self.client.post(url, data, format='json')
+        response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_retrieve_medication_valid(self):
@@ -49,20 +49,20 @@ class MedicationViewTests(APITestCase):
     def test_update_medication_valid(self):
         url = reverse("medication-detail", args=[self.med.pk])
         data = {"name": "Aspirin Updated", "dosage_mg": 150, "prescribed_per_day": 2}
-        response = self.client.put(url, data, format='json')
+        response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["name"], "Aspirin Updated")
 
     def test_update_medication_invalid_data(self):
         url = reverse("medication-detail", args=[self.med.pk])
         data = {"name": "", "dosage_mg": -100, "prescribed_per_day": -1}
-        response = self.client.put(url, data, format='json')
+        response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_update_medication_invalid_id(self):
         url = reverse("medication-detail", args=[9999])
         data = {"name": "Name", "dosage_mg": 100, "prescribed_per_day": 2}
-        response = self.client.put(url, data, format='json')
+        response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_medication_valid(self):
@@ -79,7 +79,9 @@ class MedicationViewTests(APITestCase):
         url = reverse("medication-get-external-info", args=[self.med.pk])
         response = self.client.get(url)
         # Accept 200 or 502 depending on external API availability, assert response structure
-        self.assertIn(response.status_code, (status.HTTP_200_OK, status.HTTP_502_BAD_GATEWAY))
+        self.assertIn(
+            response.status_code, (status.HTTP_200_OK, status.HTTP_502_BAD_GATEWAY)
+        )
 
     def test_get_external_info_invalid_id(self):
         url = reverse("medication-get-external-info", args=[9999])
@@ -89,8 +91,12 @@ class MedicationViewTests(APITestCase):
 
 class DoseLogViewTests(APITestCase):
     def setUp(self):
-        self.med = Medication.objects.create(name="Ibuprofen", dosage_mg=200, prescribed_per_day=3)
-        self.log = DoseLog.objects.create(medication=self.med, taken_at=timezone.now(), was_taken=True)
+        self.med = Medication.objects.create(
+            name="Ibuprofen", dosage_mg=200, prescribed_per_day=3
+        )
+        self.log = DoseLog.objects.create(
+            medication=self.med, taken_at=timezone.now(), was_taken=True
+        )
 
     def test_list_dose_logs(self):
         url = reverse("doselog-list")
@@ -103,7 +109,7 @@ class DoseLogViewTests(APITestCase):
         data = {
             "medication": self.med.pk,
             "taken_at": (timezone.now() - timedelta(days=1)).isoformat(),
-            "was_taken": True
+            "was_taken": True,
         }
         response = self.client.post(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -126,7 +132,11 @@ class DoseLogViewTests(APITestCase):
 
     def test_update_dose_log_valid(self):
         url = reverse("doselog-detail", args=[self.log.pk])
-        data = {"medication": self.med.pk, "taken_at": timezone.now().isoformat(), "was_taken": False}
+        data = {
+            "medication": self.med.pk,
+            "taken_at": timezone.now().isoformat(),
+            "was_taken": False,
+        }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data["was_taken"])
@@ -139,7 +149,11 @@ class DoseLogViewTests(APITestCase):
 
     def test_update_dose_log_invalid_id(self):
         url = reverse("doselog-detail", args=[9999])
-        data = {"medication": self.med.pk, "taken_at": timezone.now().isoformat(), "was_taken": True}
+        data = {
+            "medication": self.med.pk,
+            "taken_at": timezone.now().isoformat(),
+            "was_taken": True,
+        }
         response = self.client.put(url, data, format="json")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -173,15 +187,17 @@ class DoseLogViewTests(APITestCase):
 
 class MedicationExternalInfoTest(APITestCase):
     def setUp(self):
-        self.med = Medication.objects.create(name="Aspirin", dosage_mg=100, prescribed_per_day=2)
+        self.med = Medication.objects.create(
+            name="Aspirin", dosage_mg=100, prescribed_per_day=2
+        )
 
-    @patch('medtrackerapp.services.DrugInfoService.get_drug_info')
+    @patch("medtrackerapp.services.DrugInfoService.get_drug_info")
     def test_external_info_success(self, mock_get_drug_info):
         # Mock successful API response
         mock_get_drug_info.return_value = {
             "generic_name": "aspirin",
             "brand_name": "Bayer",
-            "purpose": "Pain relief"
+            "purpose": "Pain relief",
         }
 
         url = reverse("medication-get-external-info", args=[self.med.pk])
@@ -191,7 +207,7 @@ class MedicationExternalInfoTest(APITestCase):
         self.assertIn("generic_name", response.data)
         self.assertEqual(response.data["generic_name"], "aspirin")
 
-    @patch('medtrackerapp.services.DrugInfoService.get_drug_info')
+    @patch("medtrackerapp.services.DrugInfoService.get_drug_info")
     def test_external_info_failure(self, mock_get_drug_info):
         # Mock an exception raised by the API call
         mock_get_drug_info.side_effect = Exception("API failure")
@@ -206,47 +222,44 @@ class MedicationExternalInfoTest(APITestCase):
 
 class ExpectedDosesEndpointTest(APITestCase):
     def setUp(self):
-        self.med = Medication.objects.create(name="Aspirin", dosage_mg=100, prescribed_per_day=2)
+        self.med = Medication.objects.create(
+            name="Aspirin", dosage_mg=100, prescribed_per_day=2
+        )
 
     def test_valid_request_returns_200(self):
         days = 3
         response = self.client.get(
-            f'/api/medications/{self.med.id}/expected-doses/?days={days}'
+            f"/api/medications/{self.med.id}/expected-doses/?days={days}"
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn('medication_id', response.data)
-        self.assertIn('days', response.data)
-        self.assertIn('expected_doses', response.data)
-        self.assertEqual(response.data['medication_id'], self.med.id)
-        self.assertEqual(response.data['days'], days)
-        self.assertEqual(response.data['expected_doses'], self.med.expected_doses(days))
+        self.assertIn("medication_id", response.data)
+        self.assertIn("days", response.data)
+        self.assertIn("expected_doses", response.data)
+        self.assertEqual(response.data["medication_id"], self.med.id)
+        self.assertEqual(response.data["days"], days)
+        self.assertEqual(response.data["expected_doses"], self.med.expected_doses(days))
 
     def test_missing_days_parameter_returns_400(self):
-        response = self.client.get(
-            f'/api/medications/{self.med.id}/expected-doses/'
-        )
+        response = self.client.get(f"/api/medications/{self.med.id}/expected-doses/")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_invalid_days_value_returns_400(self):
         """Test request with non-integer days value"""
         response = self.client.get(
-            f'/api/medications/{self.med.id}/expected-doses/',
-            {'days': 'invalid'}
+            f"/api/medications/{self.med.id}/expected-doses/", {"days": "invalid"}
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_negative_days_returns_400(self):
         response = self.client.get(
-            f'/api/medications/{self.med.id}/expected-doses/',
-            {'days': -5}
+            f"/api/medications/{self.med.id}/expected-doses/", {"days": -5}
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_zero_days_returns_400(self):
         response = self.client.get(
-            f'/api/medications/{self.med.id}/expected-doses/',
-            {'days': 0}
+            f"/api/medications/{self.med.id}/expected-doses/", {"days": 0}
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
@@ -254,7 +267,7 @@ class ExpectedDosesEndpointTest(APITestCase):
         days = 3
         with patch.object(Medication, "expected_doses", side_effect=ValueError("boom")):
             response = self.client.get(
-                f'/api/medications/{self.med.id}/expected-doses/?days={days}'
+                f"/api/medications/{self.med.id}/expected-doses/?days={days}"
             )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -262,7 +275,9 @@ class ExpectedDosesEndpointTest(APITestCase):
 
 class NoteViewTests(APITestCase):
     def setUp(self):
-        self.med = Medication.objects.create(name="Aspirin", dosage_mg=100, prescribed_per_day=2)
+        self.med = Medication.objects.create(
+            name="Aspirin", dosage_mg=100, prescribed_per_day=2
+        )
 
     def test_create_note_returns_201(self):
         url = reverse("note-list")

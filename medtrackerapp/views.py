@@ -6,6 +6,7 @@ from .models import Medication, DoseLog, Note
 from .serializers import MedicationSerializer, DoseLogSerializer, NoteSerializer
 from rest_framework.filters import SearchFilter
 
+
 def _get_required_positive_int_query_param(request, name: str) -> int:
     """Parse a required positive integer query parameter.
 
@@ -19,12 +20,15 @@ def _get_required_positive_int_query_param(request, name: str) -> int:
     try:
         value = int(raw_value)
     except (TypeError, ValueError) as exc:
-        raise ValueError(f"Query parameter '{name}' must be a positive integer.") from exc
+        raise ValueError(
+            f"Query parameter '{name}' must be a positive integer."
+        ) from exc
 
     if value <= 0:
         raise ValueError(f"Query parameter '{name}' must be a positive integer.")
 
     return value
+
 
 class MedicationViewSet(viewsets.ModelViewSet):
     """
@@ -43,6 +47,7 @@ class MedicationViewSet(viewsets.ModelViewSet):
         - GET /medications/{id}/info/ — fetch external drug info from OpenFDA
         - GET /medications/{id}/expected-doses/?days=X — expected doses over X days
     """
+
     queryset = Medication.objects.all()
     serializer_class = MedicationSerializer
 
@@ -126,6 +131,7 @@ class DoseLogViewSet(viewsets.ModelViewSet):
         - GET /logs/filter/?start=YYYY-MM-DD&end=YYYY-MM-DD —
           filter logs within a date range
     """
+
     queryset = DoseLog.objects.all()
     serializer_class = DoseLogSerializer
 
@@ -151,14 +157,17 @@ class DoseLogViewSet(viewsets.ModelViewSet):
 
         if not start or not end:
             return Response(
-                {"error": "Both 'start' and 'end' query parameters are required and must be valid dates."},
-                status=status.HTTP_400_BAD_REQUEST
+                {
+                    "error": "Both 'start' and 'end' query parameters are required and must be valid dates."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        logs = self.get_queryset().filter(
-            taken_at__date__gte=start,
-            taken_at__date__lte=end
-        ).order_by("taken_at")
+        logs = (
+            self.get_queryset()
+            .filter(taken_at__date__gte=start, taken_at__date__lte=end)
+            .order_by("taken_at")
+        )
 
         serializer = self.get_serializer(logs, many=True)
         return Response(serializer.data)
@@ -181,7 +190,8 @@ class NoteViewSet(
         - GET /notes/{id}/ — retrieve a specific note
         - DELETE /notes/{id}/ — delete a specific note
     """
+
     filter_backends = (SearchFilter,)
-    search_fields = ['medication__name']
+    search_fields = ["medication__name"]
     queryset = Note.objects.all()
     serializer_class = NoteSerializer
