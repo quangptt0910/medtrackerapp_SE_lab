@@ -1,14 +1,12 @@
-from unittest import TestCase
 
 from rest_framework.test import APITestCase
 from medtrackerapp.models import Medication, DoseLog
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
-from datetime import timedelta, date, datetime
-from unittest.mock import patch, Mock
+from datetime import timedelta
+from unittest.mock import patch
 
-from medtrackerapp.services import DrugInfoService
 
 
 class MedicationViewTests(APITestCase):
