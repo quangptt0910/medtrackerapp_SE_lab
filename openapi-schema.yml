@@ -425,7 +425,13 @@ paths:
 
 
         Updating existing notes is intentionally not supported.'
-      parameters: []
+      parameters:
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
       responses:
         '200':
           content:
@@ -478,6 +484,12 @@ paths:
         description: A unique integer value identifying this note.
         schema:
           type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
       responses:
         '200':
           content:
@@ -498,6 +510,12 @@ paths:
         in: path
         required: true
         description: A unique integer value identifying this note.
+        schema:
+          type: string
+      - name: search
+        required: false
+        in: query
+        description: A search term.
         schema:
           type: string
       responses:

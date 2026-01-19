@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from django.utils.dateparse import parse_date
 from .models import Medication, DoseLog, Note
 from .serializers import MedicationSerializer, DoseLogSerializer, NoteSerializer
-
+from rest_framework.filters import SearchFilter
 
 def _get_required_positive_int_query_param(request, name: str) -> int:
     """Parse a required positive integer query parameter.
@@ -36,7 +36,7 @@ class MedicationViewSet(viewsets.ModelViewSet):
 
     Endpoints:
         - GET /medications/ — list all medications
-        - POST /medications/ — create a new medication
+        - POST /medications/ — create a     new medication
         - GET /medications/{id}/ — retrieve a specific medication
         - PUT/PATCH /medications/{id}/ — update a medication
         - DELETE /medications/{id}/ — delete a medication
@@ -174,7 +174,14 @@ class NoteViewSet(
     """API endpoint for listing, retrieving, creating, and deleting notes.
 
     Updating existing notes is intentionally not supported.
-    """
 
+    Endpoints:
+        - GET /notes/ — list all notes
+        - POST /notes/ — create a new note
+        - GET /notes/{id}/ — retrieve a specific note
+        - DELETE /notes/{id}/ — delete a specific note
+    """
+    filter_backends = (SearchFilter,)
+    search_fields = ['medication__name']
     queryset = Note.objects.all()
     serializer_class = NoteSerializer
