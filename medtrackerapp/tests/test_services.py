@@ -2,8 +2,8 @@ from unittest.mock import patch, Mock
 from django.test import TestCase
 from medtrackerapp.services import DrugInfoService
 
-class DrugInfoServiceTest(TestCase):
 
+class DrugInfoServiceTest(TestCase):
     def test_get_drug_info_missing_drug_name(self):
         with self.assertRaises(ValueError) as context:
             DrugInfoService.get_drug_info("")

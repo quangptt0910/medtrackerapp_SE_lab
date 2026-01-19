@@ -12,19 +12,21 @@ router.register("notes", NoteViewSet, basename="note")
 
 
 schema_view = get_schema_view(
-openapi.Info(
-title="Software engineering lab",
-default_version="v1",
-description="API documentation for the lab",
-),
-public=True,
-permission_classes=(AllowAny,),
-authentication_classes=[],
+    openapi.Info(
+        title="Software engineering lab",
+        default_version="v1",
+        description="API documentation for the lab",
+    ),
+    public=True,
+    permission_classes=(AllowAny,),
+    authentication_classes=[],
 )
 
 urlpatterns = [
     path("", include(router.urls)),
-    path('swagger/', schema_view.with_ui('swagger',
-    cache_timeout=0), name='schema-swagger-ui'),
+    path(
+        "swagger/",
+        schema_view.with_ui("swagger", cache_timeout=0),
+        name="schema-swagger-ui",
+    ),
 ]
-
